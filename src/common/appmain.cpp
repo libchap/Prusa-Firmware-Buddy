@@ -144,7 +144,6 @@ void app_idle(void) {
 
 void app_run(void) {
     LangEEPROM::getInstance();
-    store().init();
 
     marlin_server_init();
     marlin_server_idle_cb = app_idle;

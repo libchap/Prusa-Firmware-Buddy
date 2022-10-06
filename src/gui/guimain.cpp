@@ -31,7 +31,11 @@
 #include "w25x.h"
 #include "gui_fsensor_api.hpp"
 #include "gcode_info.hpp"
+<<<<<<< HEAD
 #include "version.h"
+=======
+#include "configuration_store.hpp"
+>>>>>>> d20f6857 (Migrate from old eeprom to configuration_store)
 
 #include <option/bootloader.h>
 #include <option/bootloader_update.h>
@@ -291,7 +295,7 @@ void gui_run(void) {
     Screens::Init(screen_initializer, screen_initializer + (sizeof(screen_initializer) / sizeof(screen_initializer[0])));
 
     // TIMEOUT variable getting value from EEPROM when EEPROM interface is initialized
-    if (eeprom_get_bool(EEVAR_MENU_TIMEOUT)) {
+    if (config_store().menu_timeout.get()) {
         Screens::Access()->EnableMenuTimeout();
     } else {
         Screens::Access()->DisableMenuTimeout();

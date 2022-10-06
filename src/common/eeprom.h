@@ -4,7 +4,6 @@
 
 #include <stdbool.h>
 #include "variant8.h"
-#include "eeprom_function_api.h"
 #include "selftest_eeprom.hpp"
 #include <stddef.h>
 

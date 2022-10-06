@@ -10,6 +10,7 @@
 #include "translator.hpp"
 #include "SteelSheets.hpp"
 #include "png_resources.hpp"
+#include "configuration_store.hpp"
 
 /*****************************************************************************/
 //MI_VERSION_INFO
@@ -210,9 +211,9 @@ void MI_EEPROM::click(IWindowMenu & /*window_menu*/) {
 /*****************************************************************************/
 //MI_DEVHASH_IN_QR
 MI_DEVHASH_IN_QR::MI_DEVHASH_IN_QR()
-    : WI_SWITCH_OFF_ON_t(eeprom_get_bool(EEVAR_DEVHASH_IN_QR), _(label), nullptr, is_enabled_t::yes, is_hidden_t::no) {}
+    : WI_SWITCH_OFF_ON_t(config_store().dev_hash_qr.get(), _(label), IDR_NULL, is_enabled_t::yes, is_hidden_t::no) {}
 void MI_DEVHASH_IN_QR::OnChange(size_t old_index) {
-    eeprom_set_bool(EEVAR_DEVHASH_IN_QR, !old_index);
+    config_store().dev_hash_qr.set(!old_index);
 }
 
 /*****************************************************************************/

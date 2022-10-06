@@ -10,6 +10,7 @@
 #include <array>
 
 #include "wui_api.h"
+#include "configuration_store.hpp"
 
 static constexpr size_t PASSWD_STR_LENGTH = PL_PASSWORD_SIZE + 1; // don't need space for '%s' and '\0' since PL_PASSWORD_SIZE contains '\0' too
 
@@ -38,7 +39,7 @@ class MI_PL_ENABLED : public WI_SWITCH_OFF_ON_t {
 
 public:
     MI_PL_ENABLED()
-        : WI_SWITCH_OFF_ON_t(eeprom_get_ui8(EEVAR_PL_RUN),
+        : WI_SWITCH_OFF_ON_t(config_store().pl_run.get(),
             string_view_utf8::MakeCPUFLASH((const uint8_t *)label), nullptr, is_enabled_t::yes, is_hidden_t::no) {}
 
 public:
@@ -160,7 +161,7 @@ void ScreenMenuPrusaLink::windowEvent(EventLock /*has private ctor*/, window_t *
             break;
         }
         case MI_PL_ENABLED::EventMask::value:
-            eeprom_set_ui8(EEVAR_PL_RUN, action);
+            config_store().pl_run.set(action);
             notify_reconfigure();
             break;
         default:
