@@ -1,6 +1,6 @@
 #include "MItem_tools.hpp"
 #include "png_resources.hpp"
-#include "dump.h"
+#include <crash_dump/dump.h>
 #include "eeprom_loadsave.h"
 #include "marlin_client.h"
 #include "gui.hpp"
