@@ -153,9 +153,9 @@ void ScreenMenuPrusaLink::windowEvent(EventLock /*has private ctor*/, window_t *
         uint32_t action = ((uint32_t)param) & 0xFFFF;
         uint32_t type = ((uint32_t)param) & 0xFFFF0000;
         switch (type) {
-        case MI_PL_REGENERATE_PASSWORD::EventMask::value: {
-            wui_generate_password();
-            display_passwd(wui_get_password());
+        case MI_PL_REGENERATE_API_KEY::EventMask::value: {
+            wui_generate_api_key();
+            display_passwd(wui_get_api_key());
             break;
         }
         case MI_PL_ENABLED::EventMask::value:
