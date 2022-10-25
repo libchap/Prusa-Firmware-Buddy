@@ -42,16 +42,21 @@ using std::unique_lock;
 
 #define LOOP_EVT_TIMEOUT 500UL
 
-static variant8_t prusa_link_password;
 
-const char *wui_generate_password(char *password, uint32_t length) {
+using PasswordType = decltype(config_store().pl_password.get());
+
+PasswordType prusa_link_password = {};
+
+void wui_generate_password() {
+
     // Avoid confusing character pairs ‒ 1/l/I, 0/O.
     static char charset[] = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     // One less, as the above contains '\0' at the end which we _do not_ want to generate.
     const uint32_t charset_length = sizeof(charset) / sizeof(char) - 1;
     uint32_t i = 0;
+    PasswordType password;
 
-    while (i < length - 1) {
+    while (i < password.size() - 1) {
         uint32_t random = 0;
         HAL_StatusTypeDef status = HAL_RNG_GenerateRandomNumber(&hrng, &random);
         if (HAL_OK == status) {
@@ -59,24 +64,17 @@ const char *wui_generate_password(char *password, uint32_t length) {
         }
     }
     password[i] = 0;
-    return password;
-}
 
-void wui_store_password(char *password, uint32_t length) {
-    variant8_t *p_prusa_link_password = &prusa_link_password;
-    variant8_done(&p_prusa_link_password);
-    prusa_link_password = variant8_init(VARIANT8_PCHAR, length, password);
-    eeprom_set_var(EEVAR_PL_PASSWORD, prusa_link_password);
+    config_store().pl_password.set(password);
+    prusa_link_password = password;
 }
 
 namespace {
 
 void prusalink_password_init(void) {
-    prusa_link_password = eeprom_get_var(EEVAR_PL_PASSWORD);
-    if (!strcmp(variant8_get_pch(prusa_link_password), "")) {
-        char password[PL_PASSWORD_SIZE] = { 0 };
-        wui_generate_password(password, PL_PASSWORD_SIZE);
-        wui_store_password(password, PL_PASSWORD_SIZE);
+    prusa_link_password = config_store().pl_password.get();
+    if (strcmp(prusa_link_password.data(), "") == 0) {
+        wui_generate_password();
     }
 }
 
@@ -559,7 +557,7 @@ void start_network_task() {
 }
 
 const char *wui_get_password() {
-    return variant8_get_pch(prusa_link_password);
+    return prusa_link_password.data();
 }
 
 void notify_esp_data() {

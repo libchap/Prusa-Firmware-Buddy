@@ -31,11 +31,8 @@
 #include "w25x.h"
 #include "gui_fsensor_api.hpp"
 #include "gcode_info.hpp"
-<<<<<<< HEAD
 #include "version.h"
-=======
 #include "configuration_store.hpp"
->>>>>>> d20f6857 (Migrate from old eeprom to configuration_store)
 
 #include <option/bootloader.h>
 #include <option/bootloader_update.h>

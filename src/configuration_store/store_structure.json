@@ -266,7 +266,7 @@
     "data_type": "u8",
     "default": 1
   },
-  "pl_api_key": {
+  "pl_password": {
     "data_type": "string",
     "default": "",
     "length": 20
