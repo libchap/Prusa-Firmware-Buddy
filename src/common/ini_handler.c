@@ -1,7 +1,7 @@
 // INI file handler (ini_handler.c)
 
 #include "ini_handler.h"
-#include "wui_api.hpp"
+#include "wui_api.h"
 #include <string.h>
 #include "ff.h"
 #include "eeprom.h"

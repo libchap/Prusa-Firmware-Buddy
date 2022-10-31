@@ -13,6 +13,7 @@
 #include "configuration_store.hpp"
 
 static constexpr size_t PASSWD_STR_LENGTH = PL_PASSWORD_SIZE + 1; // don't need space for '%s' and '\0' since PL_PASSWORD_SIZE contains '\0' too
+using ApiKeyType = decltype(config_store().pl_password.get());
 
 // ----------------------------------------------------------------
 // GUI Prusa Link Password regenerate
@@ -153,9 +154,9 @@ void ScreenMenuPrusaLink::windowEvent(EventLock /*has private ctor*/, window_t *
         uint32_t action = ((uint32_t)param) & 0xFFFF;
         uint32_t type = ((uint32_t)param) & 0xFFFF0000;
         switch (type) {
-        case MI_PL_REGENERATE_API_KEY::EventMask::value: {
-            wui_generate_api_key();
-            display_passwd(wui_get_api_key());
+        case MI_PL_REGENERATE_PASSWORD::EventMask::value: {
+            wui_generate_password();
+            display_passwd(wui_get_password());
             break;
         }
         case MI_PL_ENABLED::EventMask::value:

@@ -10,7 +10,6 @@
 #include "knob_event.hpp"
 #include "netdev.h"
 #include "wui.h"
-#include "SteelSheets.hpp"
 #include "MItem_crash.hpp"
 #include "Configuration_MINI_adv.h"
 #include "option/has_selftest.h"

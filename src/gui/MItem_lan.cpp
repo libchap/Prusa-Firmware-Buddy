@@ -5,7 +5,7 @@
  */
 
 #include "MItem_lan.hpp"
-#include "wui_api.hpp"
+#include "wui_api.h"
 #include "netdev.h"
 #include "ScreenHandler.hpp"
 #include "marlin_client.h"
