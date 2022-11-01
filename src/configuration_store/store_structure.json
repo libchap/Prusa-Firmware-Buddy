@@ -269,7 +269,7 @@
   "pl_password": {
     "data_type": "string",
     "default": "",
-    "length": 20
+    "length": 17
   },
   "usb_msc_enabled": {
     "data_type": "bool",
@@ -301,41 +301,48 @@
     "data_type": "uint16_t",
     "default": 0
   },
-  "crash_enabled": {
-    "data_type": "bool",
-    "default": true
-  },
-  "crash_sens_x": {
-    "data_type": "int16_t",
-    "default": "crash_sens[0]"
-  },
-  "crash_sens_y": {
-    "data_type": "int16_t",
-    "default": "crash_sens[1]"
-  },
-  "crash_per_x": {
-    "data_type": "uint16_t",
-    "default": "crash_period[0]"
-  },
-  "crash_per_y": {
-    "data_type": "uint16_t",
-    "default": "crash_period[1]"
-  },
-  "crash_filter": {
-    "data_type": "uint8_t",
-    "default": "crash_filter_def_val"
-  },
-  "crash_cnt_x": {
-    "data_type": "uint16_t",
-    "default": 0
-  },
-  "crash_cnt_y": {
-    "data_type": "uint16_t",
-    "default": 0
-  },
-  "power_cnt": {
-    "data_type": "uint16_t",
-    "default": 0
+  "crash_recovery": {
+    "data_type": "struct",
+    "type_name": "CrashRecoverySettings",
+    "ifdef": "ENABLED(CRASH_RECOVERY)",
+    "members": {
+      "crash_enabled": {
+        "data_type": "bool",
+        "default": true
+      },
+      "crash_sens_x": {
+        "data_type": "int16_t",
+        "default": "crash_sens[0]"
+      },
+      "crash_sens_y": {
+        "data_type": "int16_t",
+        "default": "crash_sens[1]"
+      },
+      "crash_per_x": {
+        "data_type": "uint16_t",
+        "default": "crash_period[0]"
+      },
+      "crash_per_y": {
+        "data_type": "uint16_t",
+        "default": "crash_period[1]"
+      },
+      "crash_filter": {
+        "data_type": "uint8_t",
+        "default": "crash_filter_def_val"
+      },
+      "crash_cnt_x": {
+        "data_type": "uint16_t",
+        "default": 0
+      },
+      "crash_cnt_y": {
+        "data_type": "uint16_t",
+        "default": 0
+      },
+      "power_cnt": {
+        "data_type": "uint16_t",
+        "default": 0
+      }
+    }
   },
   "steel_sheets": {
     "data_type": "SteelSheets",

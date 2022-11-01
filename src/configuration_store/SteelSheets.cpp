@@ -115,7 +115,7 @@ float SteelSheets::get_sheet_offset(size_t index) {
     return std::clamp(sheet.has_value() ? sheet.value().offset : 0, Z_OFFSET_MIN, Z_OFFSET_MAX);
 }
 
-constexpr size_t SteelSheets::get_active_sheet_index() const {
+size_t SteelSheets::get_active_sheet_index() const {
     return current_sheet;
 }
 void SteelSheets::store_changes() {

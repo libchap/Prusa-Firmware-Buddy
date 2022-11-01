@@ -1,5 +1,5 @@
 import pytest
-from structure_generator import ItemParser, Item, BasicItem, ArrayItem, DataType, StructItem
+from structure_generator import ItemParser, Item, BasicItem, ArrayItem, StructItem
 
 
 def test_array_def_for_each():
@@ -95,7 +95,7 @@ std::array<char,100> string_type;
 
 template <class Packer>
 void pack (Packer &pack) {
-pack(array, SimpleType, string_type);}
+pack( array, SimpleType, string_type); }
 };"""
 
 

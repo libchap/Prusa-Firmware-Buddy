@@ -13,10 +13,6 @@
 #endif
 
 namespace configuration_store {
-template <class... Ts>
-struct overloaded : Ts... {
-    using Ts::operator()...;
-};
 using Backend = std::variant<EepromAccess>;
 
 FreeRTOS_Mutex &get_item_mutex();
@@ -92,12 +88,11 @@ void ConfigurationStore<CONFIG>::dump_data(Backend data_dump, bool save_default)
 template <class T, class CovertTo>
 void MemConfigItem<T, CovertTo>::set(T new_data) {
     std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
-    if (data != new_data) {
+    if (!(data == new_data)) {
 #ifndef EEPROM_UNITTEST
         buddy::DisableInterrupts disable;
 #endif
         data = new_data;
-        // using eeprom access singleton directly, because I don't want to have pointer in every item
         ConfigurationStore<>::GetStore().template set(key, data);
     }
 }
@@ -126,7 +121,7 @@ void MemConfigItem<std::array<T, SIZE>>::init(const std::array<T, SIZE> &new_dat
 template <class T, size_t SIZE>
 void MemConfigItem<std::array<T, SIZE>>::set(const std::array<T, SIZE> &new_data) {
     std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
-    if (data != new_data) {
+    if (!(data == new_data)) {
 #ifndef EEPROM_UNITTEST
         buddy::DisableInterrupts disable;
 #endif

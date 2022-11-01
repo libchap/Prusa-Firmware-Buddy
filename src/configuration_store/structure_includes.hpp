@@ -98,7 +98,6 @@ private:
     bool set_sheet(size_t index, Sheet sheet);
     void update_marlin(float offset);
     void store_changes();
-    constexpr size_t get_active_sheet_index() const;
 
 public:
     SteelSheets() = default;
@@ -126,6 +125,7 @@ public:
     float get_z_offset();
     float get_sheet_offset(size_t index);
     bool set_sheet_offset(size_t index, float offset);
+    size_t get_active_sheet_index() const;
 
     bool operator!=(const SteelSheets &rhs) const {
         return !(rhs == *this);

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Optional, List
 from pathlib import Path
 import zlib
+import os
 
 
 def add_ifdef(ifdef: str, definition: str) -> str:
@@ -38,6 +39,10 @@ class Item(ABC):
         pass
 
     @abstractmethod
+    def get_additional_declarations(self) -> Optional[str]:
+        pass
+
+    @abstractmethod
     def get_type_name(self) -> str:
         pass
 
@@ -59,6 +64,9 @@ class BasicItem(Item):
         self.data_type = data_type
         self.def_val = default
         self.ifdef = ifdef
+
+    def get_additional_declarations(self) -> Optional[str]:
+        return None
 
     def get_additional_definitions(self) -> Optional[str]:
         return None
@@ -85,6 +93,9 @@ class ArrayItem(Item):
     def get_additional_definitions(self) -> Optional[str]:
         return None
 
+    def get_additional_declarations(self) -> Optional[str]:
+        return None
+
     def get_type_name(self):
         return f"std::array<{self.item.get_type_name()},{self.size}>"
 
@@ -105,22 +116,58 @@ class StructItem(Item):
         return members
 
     def __get_packer_function(self) -> str:
-        packer = \
+        return \
             f"""template <class Packer>
 void pack (Packer &pack) {{
-pack("""
-        for name in self.items.keys():
-            packer = packer + f"{name}, "
-        return f"{str(packer[0:-2])});}}"
+pack( {', '.join(self.items.keys())}); }}"""
+
+    def __get_equality_operator(self):
+        declaration_eq = f"bool operator==(const {self.type_name} & rhs) "
+        conditions = " && ".join(
+            [f"{name} == rhs.{name}" for name in self.items.keys()])
+        body = f"{{\nreturn {conditions};\n }}\n"
+        eq = declaration_eq + body
+        neq = f"""bool operator!=(const {self.type_name} & rhs) {{
+         return !(*this == rhs);
+         }}\n"""
+        return eq + neq
+
+    def __get_accessor_function_declarations(self) -> list[str]:
+        declarations = []
+        for name, data in self.items.items():
+            declarations.append(f"{data.get_type_name()} get_{name}();")
+            declarations.append(f"void set_{name}({data.get_type_name()});")
+        return declarations
+
+    def __get_accessor_function_definitions(self):
+        definitions = []
+        for name, data in self.items.items():
+            definitions.append(
+                f"""{data.get_type_name()} {self.get_type_name()}::get_{name}(){{
+            return {name};
+            }}
+            """)
+
+            definitions.append(
+                f"""void {self.get_type_name()}::set_{name}({data.get_type_name()} new_data){{
+                {name} = new_data;
+                config_store().{self.name}.set(*this);
+            }}""")
+        return definitions
+
+    def get_additional_definitions(self) -> Optional[str]:
+        return "\n".join(self.__get_accessor_function_definitions())
 
     def get_type_name(self):
         return self.type_name
 
-    def get_additional_definitions(self) -> Optional[str]:
+    def get_additional_declarations(self) -> Optional[str]:
         return \
             f"""struct {self.get_type_name()} {{
 {self.__get_members()}
 {self.__get_packer_function()}
+{self.__get_equality_operator()}
+{os.linesep.join(self.__get_accessor_function_declarations())}
 }};"""
 
     @property
@@ -221,6 +268,9 @@ def main():
     parser.add_argument("OutputSwitch",
                         help="Path to where to store the output file",
                         type=Path)
+    parser.add_argument("ImplFile",
+                        help="Path to where to store the output file",
+                        type=Path)
     # parser.add_argument("Printer", help="Name of the printer", type=str)
 
     args = parser.parse_args()
@@ -236,11 +286,13 @@ def main():
         file.write("#pragma once\n")
         file.write("#include \"structure_includes.hpp\"\n")
         file.write("namespace configuration_store{\n")
-        for item in items:
-            additional = item.get_additional_definitions()
-            if additional is not None:
-                file.write(additional)
-                file.write("\n")
+
+        file.write("\n".join([
+            item.get_additional_declarations() for item in items
+            if item.get_additional_declarations() is not None
+        ]))
+        file.write("\n")
+
         file.write("struct ConfigurationStoreStructure {\n")
         file.write("private:\n")
 
@@ -264,6 +316,7 @@ def main():
             else:
                 file.write(f"{line}\n")
         file.write("); };\n};\n}\n")
+
     with open(args.OutputSwitch, "w") as file:
         file.write("#include \"configuration_store/item_updater.hpp\"\n")
         file.write("#include \"configuration_store/eeprom_access.hpp\"\n")
@@ -276,10 +329,21 @@ def main():
         file.write("switch(crc){\n")
         for case in item_parser.get_switch_cases():
             file.write(f"{case}\n")
+
         file.write("default:\n return false;\n")
         file.write("}\n")
         file.write("return false;\n")
         file.write("}\n")
+
+    with open(args.ImplFile, "w") as file:
+        file.write(
+            "#include \"configuration_store/configuration_store.hpp\"\n")
+        file.write("using namespace configuration_store;\n")
+        file.write("\n".join([
+            item.get_additional_definitions() for item in items
+            if item.get_additional_definitions() is not None
+        ]))
+        file.write("\n")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@ include(ConfigurationStoreUtils.cmake)
 if(BOARD MATCHES ".*BUDDY")
   target_sources(
     firmware PRIVATE config_store_c_api.cpp config_store_c_api.cpp configuration_store.cpp
-                     eeprom_access.cpp
+                     eeprom_access.cpp SteelSheets.cpp
     )
 endif()
 
