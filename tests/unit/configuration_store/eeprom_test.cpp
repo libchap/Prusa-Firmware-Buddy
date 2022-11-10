@@ -18,7 +18,7 @@ TEST_CASE("Test item storing and loading") {
     std::vector<uint8_t> data { 0x11, 0x22, 0x33, 0x44 };
     eeprom_chip.clear();
     EepromAccess eeprom;
-    ConfigurationStore<> store;
+    ConfigurationStore<> store(EepromAccess {});
     auto updater = ItemUpdater(store);
     eeprom.init(updater);
     eeprom.store_item(data);
@@ -60,7 +60,7 @@ TEST_CASE("Multiple saves and loads") {
     std::vector<std::vector<uint8_t>> data = { { 0x11, 0x22, 0x33, 0x44 }, { 0x11, 0x44 }, { 0x11, 0x33, 0x44 }, { 0x11 }, { 0x11, 0x11, 0x22, 0x33, 0x44 } };
     eeprom_chip.clear();
     EepromAccess eeprom;
-    ConfigurationStore<> store;
+    ConfigurationStore<> store(EepromAccess {});
     auto updater = ItemUpdater(store);
     eeprom.init(updater);
     size_t read_address = eeprom.get_start_offset();
@@ -81,86 +81,83 @@ TEST_CASE("Cleanup") {
     std::mt19937 g(rd());
     std::uniform_int_distribution<int32_t> distribution(std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max());
     eeprom_chip.clear();
-    auto eeprom = new ConfigurationStore();
-    eeprom->init();
+    auto eeprom = new ConfigurationStore(EepromAccess {});
+    config_store().init();
     // size of crc + header + data
     int32_t data = 0;
-    uint8_t bank = eeprom->eeprom_access.bank_selector;
+    uint8_t bank = get<EepromAccess>(config_store().backend).bank_selector;
     REQUIRE(bank == 1);
     while (EepromAccess::instance().bank_selector == bank) {
         data = distribution(g);
-        uint16_t address = eeprom->eeprom_access.first_free_space;
-        eeprom->SimpleType.set(data);
-        REQUIRE(address < eeprom->eeprom_access.first_free_space);
-        address = eeprom->eeprom_access.first_free_space;
+        uint16_t address = get<EepromAccess>(config_store().backend).first_free_space;
+        config_store().SimpleType.set(data);
+        REQUIRE(address < get<EepromAccess>(config_store().backend).first_free_space);
+        address = get<EepromAccess>(config_store().backend).first_free_space;
         delete eeprom;
-        eeprom = new ConfigurationStore();
-        eeprom->init();
+        eeprom = new ConfigurationStore(EepromAccess {});
+        config_store().init();
         // if we change bank in init the address will be different
-        REQUIRE((bank != eeprom->eeprom_access.bank_selector || address == eeprom->eeprom_access.first_free_space));
-        REQUIRE(eeprom->SimpleType.get() == data);
+        REQUIRE((bank != get<EepromAccess>(config_store().backend).bank_selector || address == get<EepromAccess>(config_store().backend).first_free_space));
+        REQUIRE(config_store().SimpleType.get() == data);
     }
     delete eeprom;
-    eeprom = new ConfigurationStore();
-    eeprom->init();
+    eeprom = new ConfigurationStore(EepromAccess {});
+    config_store().init();
     REQUIRE(EepromAccess::instance().bank_selector == 0);
 
-    REQUIRE(eeprom->SimpleType.get() == data);
+    REQUIRE(config_store().SimpleType.get() == data);
 }
 
 TEST_CASE("Eeprom") {
     eeprom_chip.clear();
-    auto eeprom = new ConfigurationStore();
-    eeprom->init();
-    eeprom->SimpleType.set(10);
-    REQUIRE(eeprom->SimpleType.get() == 10);
-    eeprom->SimpleType.set(20);
-    REQUIRE(eeprom->SimpleType.get() == 20);
-    eeprom->SimpleType.set(10);
-    REQUIRE(eeprom->SimpleType.get() == 10);
-    delete eeprom;
 
-    eeprom = new ConfigurationStore();
-    eeprom->init();
-    REQUIRE(eeprom->SimpleType.get() == 10);
+    config_store().init();
+    config_store().SimpleType.set(10);
+    REQUIRE(config_store().SimpleType.get() == 10);
+    config_store().SimpleType.set(20);
+    REQUIRE(config_store().SimpleType.get() == 20);
+    config_store().SimpleType.set(10);
+    REQUIRE(config_store().SimpleType.get() == 10);
+
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+    REQUIRE(config_store().SimpleType.get() == 10);
 }
 
-//TEST_CASE("Factory reset") {
-//    eeprom_chip.clear();
-//    auto eeprom = new ConfigurationStore();
-//    eeprom->init();
-//    REQUIRE(eeprom->SimpleType.get() == 0);
-//
-//    auto struct_type = eeprom->struct_type.get();
-//    struct_type.SimpleType = 10;
-//    struct_type.array = { 10, 10 };
-//    struct_type.string_type = { "test" };
-//    eeprom->struct_type.set(struct_type);
-//
-//    eeprom->SimpleType.set(10);
-//    REQUIRE(eeprom->SimpleType.get() == 10);
-//    eeprom->factory_reset();
-//    delete eeprom;
-//    eeprom = new ConfigurationStore();
-//    eeprom->init();
-//    struct_type = eeprom->struct_type.get();
-//    REQUIRE(eeprom->SimpleType.get() == 0);
-//    REQUIRE(struct_type.SimpleType == 0);
-//    REQUIRE(struct_type.array == std::array<int32_t, 10> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-//    REQUIRE(strcmp(struct_type.string_type.data(), "test string") == 0);
-//}
+TEST_CASE("Factory reset") {
+    eeprom_chip.clear();
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+    REQUIRE(config_store().SimpleType.get() == 0);
+
+    auto struct_type = config_store().struct_type.get();
+    struct_type.SimpleType = 10;
+    struct_type.array = { 10, 10 };
+    struct_type.string_type = { "test" };
+    config_store().struct_type.set(struct_type);
+
+    config_store().SimpleType.set(10);
+    REQUIRE(config_store().SimpleType.get() == 10);
+    config_store().factory_reset();
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+    struct_type = config_store().struct_type.get();
+    REQUIRE(config_store().SimpleType.get() == 0);
+    REQUIRE(struct_type.SimpleType == 0);
+    REQUIRE(struct_type.array == std::array<int32_t, 4> { 0, 1, 2, 3 });
+    REQUIRE(strcmp(struct_type.string_type.data(), "test string") == 0);
+}
 TEST_CASE("String") {
     eeprom_chip.clear();
-    auto eeprom = new ConfigurationStore();
-    eeprom->init();
-    REQUIRE(strcmp(eeprom->string_type.get().data(), "test string") == 0);
+    config_store().init();
+    config_store().init();
+    REQUIRE(strcmp(config_store().string_type.get().data(), "test string") == 0);
 
-    eeprom->string_type.set("test");
-    REQUIRE(strcmp(eeprom->string_type.get().data(), "test") == 0);
-    delete eeprom;
-    eeprom = new ConfigurationStore();
-    eeprom->init();
-    REQUIRE(strcmp(eeprom->string_type.get().data(), "test") == 0);
+    config_store().string_type.set("test");
+    REQUIRE(strcmp(config_store().string_type.get().data(), "test") == 0);
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+    REQUIRE(strcmp(config_store().string_type.get().data(), "test") == 0);
 }
 TEST_CASE("Array") {
     eeprom_chip.clear();
@@ -168,35 +165,48 @@ TEST_CASE("Array") {
     data.fill(0);
 
     eeprom_chip.clear();
-    auto eeprom = new ConfigurationStore();
-    eeprom->init();
-    REQUIRE(eeprom->array.get() == data);
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+    REQUIRE(config_store().array.get() == data);
     data.fill(10);
-    eeprom->array.set(data);
-    REQUIRE(eeprom->array.get() == data);
-    delete eeprom;
-    eeprom = new ConfigurationStore();
-    eeprom->init();
-    REQUIRE(eeprom->array.get() == data);
+    config_store().array.set(data);
+    REQUIRE(config_store().array.get() == data);
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+    REQUIRE(config_store().array.get() == data);
 }
-//TEST_CASE("Struct") {
-//    eeprom_chip.clear();
-//    auto eeprom = new ConfigurationStore();
-//    eeprom->init();
-//
-//    auto struct_type = eeprom->struct_type.get();
-//    struct_type.SimpleType = 10;
-//    struct_type.array = { 10, 10 };
-//    struct_type.string_type = { "test" };
-//    eeprom->struct_type.set(struct_type);
-//
-//    delete eeprom;
-//    eeprom = new ConfigurationStore();
-//    eeprom->init();
-//
-//    struct_type = eeprom->struct_type.get();
-//    REQUIRE(struct_type.SimpleType == 10);
-//    REQUIRE(struct_type.array == std::array<int32_t, 10> { 10, 10, 0, 0, 0, 0, 0, 0, 0, 0 });
-//    REQUIRE(strcmp(struct_type.string_type.data(), "test") == 0);
-//}
-//
+TEST_CASE("Array multiple default values") {
+    eeprom_chip.clear();
+    std::array<int32_t, 3> data { 0, 1, 2 };
+
+    eeprom_chip.clear();
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+    REQUIRE(config_store().array_multiple_default_items.get() == data);
+    data.fill(10);
+    config_store().array_multiple_default_items.set(data);
+    REQUIRE(config_store().array_multiple_default_items.get() == data);
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+    REQUIRE(config_store().array_multiple_default_items.get() == data);
+}
+
+TEST_CASE("Struct") {
+    eeprom_chip.clear();
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+
+    auto struct_type = config_store().struct_type.get();
+    struct_type.SimpleType = 10;
+    struct_type.array = { 10, 10 };
+    struct_type.string_type = { "test" };
+    config_store().struct_type.set(struct_type);
+
+    new (&config_store()) ConfigurationStore(EepromAccess {});
+    config_store().init();
+
+    struct_type = config_store().struct_type.get();
+    REQUIRE(struct_type.SimpleType == 10);
+    REQUIRE(struct_type.array == std::array<int32_t, 4> { 10, 10, 0, 0 });
+    REQUIRE(strcmp(struct_type.string_type.data(), "test") == 0);
+}

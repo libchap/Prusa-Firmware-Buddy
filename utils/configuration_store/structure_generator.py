@@ -54,6 +54,10 @@ class Item(ABC):
     def default(self) -> str:
         pass
 
+    @abstractmethod
+    def default_val_as_array(self, size: int):
+        pass
+
 
 class BasicItem(Item):
     data_type: str
@@ -81,14 +85,50 @@ class BasicItem(Item):
                 return "true"
             else:
                 return "false"
+        if type(self.def_val) == list:
+            return f"{{ {','.join(str(val) for val in self.def_val)} }}"
         else:
             return str(self.def_val)
+
+    def default_val_as_array(self, size: int) -> str:
+        if type(self.def_val) == list:
+            if len(self.def_val) != size:
+                raise RuntimeError(
+                    "Different length of default value and array")
+            return f"{{ {','.join(str(val) for val in self.def_val)} }}"
+        else:
+            return f"{{ {','.join(str(self.def_val) for val in range(size))} }}"
+        pass
 
 
 @dataclass
 class ArrayItem(Item):
     size: int
     item: Item
+
+    def get_additional_definitions(self) -> Optional[str]:
+        return self.item.get_additional_definitions()
+
+    def get_additional_declarations(self) -> Optional[str]:
+        return self.item.get_additional_declarations()
+
+    def get_type_name(self):
+        return f"std::array<{self.item.get_type_name()},{self.size}>"
+
+    @property
+    def default(self) -> str:
+        return self.item.default_val_as_array(self.size)
+
+    def default_val_as_array(self, size: int):
+        return f"{{ {','.join(str(self.item.default) for val in range(size))} }}"
+
+
+@dataclass
+class StringItem(Item):
+    size: int
+    item: Item
+
+    # TODO: check length of default value if it is array
 
     def get_additional_definitions(self) -> Optional[str]:
         return None
@@ -103,11 +143,15 @@ class ArrayItem(Item):
     def default(self) -> str:
         return self.item.default
 
+    def default_val_as_array(self, size: int):
+        return f"{{ {','.join(str(self.item.default) for val in range(size))} }}"
+
 
 @dataclass
 class StructItem(Item):
     items: dict
     type_name: str
+    functions: list[str]
 
     def __get_members(self) -> str:
         members = ""
@@ -155,6 +199,9 @@ pack( {', '.join(self.items.keys())}); }}"""
             }}""")
         return definitions
 
+    def default_val_as_array(self, size: int):
+        return f"{{ {','.join(str(self.default) for val in range(size))} }}"
+
     def get_additional_definitions(self) -> Optional[str]:
         return "\n".join(self.__get_accessor_function_definitions())
 
@@ -162,13 +209,17 @@ pack( {', '.join(self.items.keys())}); }}"""
         return self.type_name
 
     def get_additional_declarations(self) -> Optional[str]:
-        return \
+        res = \
             f"""struct {self.get_type_name()} {{
 {self.__get_members()}
 {self.__get_packer_function()}
 {self.__get_equality_operator()}
 {os.linesep.join(self.__get_accessor_function_declarations())}
 }};"""
+        if self.functions is not None:
+            res = res + f"\n{os.linesep.join(f'{func};' for func in self.functions)}"
+
+        return res
 
     @property
     def default(self) -> str:
@@ -195,6 +246,18 @@ class ItemParser:
 
         return BasicItem(name, data_type, default, ifdef)
 
+    def __create_string_item(
+            self,
+            name: str,
+            data_type: str,
+            length: int,
+            item: dict,
+            ifdef=None,
+    ):
+        member = self.__parse_type("item", item)
+
+        return StringItem(name, ifdef, length, member)
+
     def __create_array_item(
             self,
             name: str,
@@ -212,11 +275,12 @@ class ItemParser:
                              data_type: str,
                              type_name: str,
                              members: dict,
-                             ifdef=None) -> Item:
+                             ifdef=None,
+                             functions=None) -> Item:
         items = dict()
         for member_name, data in members.items():
             items[member_name] = self.__parse_type(name, data)
-        return StructItem(name, ifdef, items, type_name)
+        return StructItem(name, ifdef, items, type_name, functions)
 
     def __parse_type(self, name: str, data: dict) -> Item:
         item_type = data["data_type"]
@@ -226,7 +290,7 @@ class ItemParser:
             return self.__create_struct_item(name, **data)
         elif item_type == "string":
             def_val = f"\"{data['default']}\""
-            return self.__create_array_item(name, "char", data["length"], {
+            return self.__create_string_item(name, "char", data["length"], {
                 "data_type": "char",
                 "default": def_val
             })
