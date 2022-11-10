@@ -93,6 +93,7 @@ void MemConfigItem<T, CovertTo>::set(T new_data) {
         buddy::DisableInterrupts disable;
 #endif
         data = new_data;
+        // using singleton to save on RAM usage, items does not need to have pointer
         ConfigurationStore<>::GetStore().template set(key, data);
     }
 }
@@ -110,37 +111,7 @@ void MemConfigItem<T, CovertTo>::init(const T &new_data) {
 template <class T, class CovertTo>
 void MemConfigItem<T, CovertTo>::dump_data(bool save_default) {
     if (save_default || (data != def_val)) {
-        ConfigurationStore<>::GetStore().template set(key, data);
-    }
-}
-template <class T, size_t SIZE>
-void MemConfigItem<std::array<T, SIZE>>::init(const std::array<T, SIZE> &new_data) {
-    data = new_data;
-}
-
-template <class T, size_t SIZE>
-void MemConfigItem<std::array<T, SIZE>>::set(const std::array<T, SIZE> &new_data) {
-    std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
-    if (!(data == new_data)) {
-#ifndef EEPROM_UNITTEST
-        buddy::DisableInterrupts disable;
-#endif
-        data = new_data;
-        // using eeprom access singleton directly, because I don't want to have pointer in every item
-        ConfigurationStore<>::GetStore().template set(key, data);
-    }
-}
-template <class T, size_t SIZE>
-std::array<T, SIZE> MemConfigItem<std::array<T, SIZE>>::get() {
-#ifndef EEPROM_UNITTEST
-    buddy::DisableInterrupts disable;
-#endif
-    return data;
-}
-
-template <class T, size_t SIZE>
-void MemConfigItem<std::array<T, SIZE>>::dump_data(bool save_default) {
-    if (save_default || check_data()) {
+        // using singleton to save on RAM usage, items does not need to have pointer
         ConfigurationStore<>::GetStore().template set(key, data);
     }
 }
@@ -154,7 +125,7 @@ void MemConfigItem<std::array<char, SIZE>>::set(const char *new_data) {
 #endif
             strncpy(data.data(), new_data, SIZE);
         }
-        // using eeprom access singleton directly, because I don't want to have pointer in every item
+        // using singleton to save on RAM usage, items does not need to have pointer
         ConfigurationStore<>::GetStore().template set(key, data);
     }
 }
@@ -168,7 +139,7 @@ void MemConfigItem<std::array<char, SIZE>>::set(const std::array<char, SIZE> &ne
 #endif
             data = new_data;
         }
-        // using eeprom access singleton directly, because I don't want to have pointer in every item
+        // using singleton to save on RAM usage, items does not need to have pointer
         ConfigurationStore<>::GetStore().template set(key, data);
     }
 }
@@ -179,6 +150,7 @@ std::array<char, SIZE> MemConfigItem<std::array<char, SIZE>>::get() {
 #endif
     return data;
 }
+
 template <size_t SIZE>
 void MemConfigItem<std::array<char, SIZE>>::init(const std::array<char, SIZE> &new_data) {
     data = new_data;
@@ -186,17 +158,9 @@ void MemConfigItem<std::array<char, SIZE>>::init(const std::array<char, SIZE> &n
 template <size_t SIZE>
 void MemConfigItem<std::array<char, SIZE>>::dump_data(bool save_default) {
     if (save_default || (strcmp(def_val, data.data()) != 0)) {
+        // using singleton to save on RAM usage, items does not need to have pointer
         ConfigurationStore<>::GetStore().template set(key, data);
     }
-}
-template <class T, size_t SIZE>
-bool MemConfigItem<std::array<T, SIZE>>::check_data() {
-    for (const T &item : data) {
-        if (item != def_val) {
-            return false;
-        }
-    }
-    return true;
 }
 }
 configuration_store::ConfigurationStore<configuration_store::ConfigurationStoreStructure> &config_store();

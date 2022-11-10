@@ -14,7 +14,7 @@ FooterItemSheets::FooterItemSheets(window_t *parent)
 }
 
 int FooterItemSheets::static_readValue() {
-    return eeprom_get_ui8(EEVAR_ACTIVE_SHEET);
+    return config_store().steel_sheets.get().get_active_sheet_index();
 }
 
 string_view_utf8 FooterItemSheets::static_makeView(int value) {

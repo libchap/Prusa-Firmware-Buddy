@@ -42,32 +42,6 @@ public:
         , def_val(def_val) {}
 };
 
-template <class T, size_t SIZE>
-struct MemConfigItem<std::array<T, SIZE>> {
-    EepromKey key;
-
-    std::array<T, SIZE> data;
-    T def_val;
-
-    void set_to_default() {
-        data.fill(def_val);
-    }
-
-    void init(const std::array<T, SIZE> &new_data);
-
-    void set(const std::array<T, SIZE> &new_data);
-    void dump_data(bool save_default);
-
-    std::array<T, SIZE> get();
-    bool check_data();
-
-    constexpr MemConfigItem(EepromKey key, const T def_val)
-        : key(key)
-        , def_val(def_val) {
-        data.fill(def_val);
-    }
-};
-
 template <size_t SIZE>
 struct MemConfigItem<std::array<char, SIZE>> {
     EepromKey key;

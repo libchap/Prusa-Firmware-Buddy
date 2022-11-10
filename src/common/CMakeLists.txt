@@ -59,7 +59,6 @@ if(BOARD MATCHES ".*BUDDY")
             segmented_json.cpp
             sound.cpp
             st25dv64k.c
-            SteelSheets.cpp
             str_utils.cpp
             stubs.c
             support_utils.cpp

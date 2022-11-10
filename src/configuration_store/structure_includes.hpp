@@ -2,8 +2,9 @@
  * This file serves as place to add defines or includes for configuration store structure
  */
 #pragma once
+#include <utility>
+#include <limits>
 #ifndef EEPROM_UNITTEST
-    #include <utility>
 
     #include "../../lib/Marlin/Marlin/src/inc/MarlinConfig.h"
     #include "config_features.h"
