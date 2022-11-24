@@ -12,7 +12,6 @@ class ItemUpdater;
 
 using EepromKey = const char *;
 struct ConfigurationStoreStructure;
-template <class T = ConfigurationStoreStructure>
 class ConfigurationStore;
 
 template <class T, class CovertTo = T>
@@ -27,7 +26,7 @@ class MemConfigItem {
     }
 
     friend ItemUpdater;
-    friend ConfigurationStore<>;
+    friend ConfigurationStore;
 
 public:
     void init(const T &new_data);

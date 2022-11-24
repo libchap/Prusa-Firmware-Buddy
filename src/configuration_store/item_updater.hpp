@@ -5,8 +5,8 @@
 namespace configuration_store {
 class ItemUpdater {
 public:
-    ConfigurationStore<> &store;
-    ItemUpdater(ConfigurationStore<> &store)
+    ConfigurationStore &store;
+    ItemUpdater(ConfigurationStore &store)
         : store(store) {}
     /**
      * @param crc
