@@ -17,7 +17,6 @@ FreeRTOS_Mutex::FreeRTOS_Mutex() noexcept // ctor should be constexpr, but canno
 };
 FreeRTOS_Mutex::FreeRTOS_Mutex(FreeRTOS_Mutex &&mutex) noexcept {
     // lock the eeprom access mutex to force waiting until everything is  finished
-    std::unique_lock lock(mutex);
     xSemaphore = xSemaphoreCreateMutexStatic(reinterpret_cast<StaticQueue_t *>(xMutexBuffer));
 };
 void buddy::lock(std::unique_lock<FreeRTOS_Mutex> &l1, std::unique_lock<FreeRTOS_Mutex> &l2) {
