@@ -349,14 +349,6 @@ bool eeprom_get_bool(enum eevar_id id) { return variant8_get_bool(eeprom_get_var
 /// Gets sheet from eeprom
 /// \param index
 /// \returns sheet from eepro, if index out of range returns Sheet{UNDEF,def_val}
-Sheet eeprom_get_sheet(uint32_t index) {
-    if (index > eeprom_num_sheets) {
-        return Sheet { "UNDEF", eeprom_z_offset_uncalibrated };
-    }
-    Sheet sheet;
-    eeprom_get_var(static_cast<enum eevar_id>(EEVAR_SHEET_PROFILE0 + index), &sheet, sizeof(sheet));
-    return sheet;
-}
 
 /**
  * @brief reads eeprom record from RAM structure
@@ -435,30 +427,6 @@ static void eeprom_set_var(enum eevar_id id, void const *var_ptr, size_t var_siz
     eeprom_unlock();
 }
 
-void eeprom_set_i8(enum eevar_id id, int8_t i8) { eeprom_set_var(id, variant8_i8(i8)); }
-void eeprom_set_bool(enum eevar_id id, bool b) { eeprom_set_var(id, variant8_bool(b)); }
-void eeprom_set_ui8(enum eevar_id id, uint8_t ui8) { eeprom_set_var(id, variant8_ui8(ui8)); }
-void eeprom_set_i16(enum eevar_id id, int16_t i16) { eeprom_set_var(id, variant8_i16(i16)); }
-void eeprom_set_ui16(enum eevar_id id, uint16_t ui16) { eeprom_set_var(id, variant8_ui16(ui16)); }
-void eeprom_set_i32(enum eevar_id id, int32_t i32) { eeprom_set_var(id, variant8_i32(i32)); }
-void eeprom_set_ui32(enum eevar_id id, uint32_t ui32) { eeprom_set_var(id, variant8_ui32(ui32)); }
-void eeprom_set_flt(enum eevar_id id, float flt) { eeprom_set_var(id, variant8_flt(flt)); }
-void eeprom_set_pchar(enum eevar_id id, char *pch, uint16_t count, int init) {
-    eeprom_set_var(id, variant8_pchar(pch, count, init));
-}
-/// Saves sheet to eeprom
-/// \param index where to store the sheet
-/// \param sheet
-/// \retval true if successful
-/// \retval false if index out of bound
-bool eeprom_set_sheet(uint32_t index, Sheet sheet) {
-    if (index > eeprom_num_sheets) {
-        return false;
-    }
-    eeprom_set_var(static_cast<enum eevar_id>(EEVAR_SHEET_PROFILE0 + index), &sheet, sizeof(Sheet));
-    return true;
-}
-
 uint8_t eeprom_get_var_count(void) {
     return EEPROM_VARCOUNT;
 }
@@ -478,70 +446,6 @@ bool eeprom_find_var_by_name(const char *name, enum eevar_id *var_id_out) {
         }
     }
     return false;
-}
-
-int eeprom_var_format(char *str, unsigned int size, enum eevar_id id, variant8_t var) {
-    int n = 0;
-    switch (id) {
-    // ip addresses
-    case EEVAR_LAN_IP4_ADDR:
-    case EEVAR_LAN_IP4_MSK:
-    case EEVAR_LAN_IP4_GW:
-    case EEVAR_LAN_IP4_DNS1:
-    case EEVAR_LAN_IP4_DNS2:
-    case EEVAR_WIFI_IP4_ADDR:
-    case EEVAR_WIFI_IP4_MSK:
-    case EEVAR_WIFI_IP4_GW:
-    case EEVAR_WIFI_IP4_DNS1:
-    case EEVAR_WIFI_IP4_DNS2: {
-        n = snprintf(str, size, "%u.%u.%u.%u", variant8_get_uia(var, 0), variant8_get_uia(var, 1),
-            variant8_get_uia(var, 2), variant8_get_uia(var, 3));
-        break;
-    }
-    default: // use default conversion
-        n = variant8_snprintf(str, size, 0, &var);
-        break;
-    }
-    return n;
-}
-
-variant8_t eeprom_var_parse(enum eevar_id id, char *str) {
-    switch (id) {
-    // ip addresses
-    case EEVAR_LAN_IP4_ADDR:
-    case EEVAR_LAN_IP4_MSK:
-    case EEVAR_LAN_IP4_GW:
-    case EEVAR_LAN_IP4_DNS1:
-    case EEVAR_LAN_IP4_DNS2:
-    case EEVAR_WIFI_IP4_ADDR:
-    case EEVAR_WIFI_IP4_MSK:
-    case EEVAR_WIFI_IP4_GW:
-    case EEVAR_WIFI_IP4_DNS1:
-    case EEVAR_WIFI_IP4_DNS2: {
-        uint8_t bytes[4];
-        int read = sscanf(str, "%hhu.%hhu.%hhu.%hhu", &bytes[0], &bytes[1],
-            &bytes[2], &bytes[3]);
-        if (read == 4)
-            return variant8_ui32(*((uint32_t *)bytes));
-        else
-            return variant8_error(VARIANT8_ERR_INVFMT, 0, 0);
-    }
-    default: // use default conversion
-        return variant8_from_str(eeprom_map[id].type, str);
-    }
-    return variant8_error(VARIANT8_ERR_UNSCON, 0, 0);
-}
-
-void eeprom_clear(void) {
-    uint16_t a;
-    uint32_t data = 0xffffffff;
-    eeprom_lock();
-    for (a = 0x0000; a < 0x0800; a += 4) {
-        st25dv64k_user_write_bytes(a, &data, 4);
-        if ((a % 0x200) == 0)   // clear entire eeprom take ~4s
-            wdt_iwdg_refresh(); // we will reset watchdog every ~1s for sure
-    }
-    eeprom_unlock();
 }
 
 // private functions
@@ -679,29 +583,4 @@ static uint16_t eeprom_fwversion_ui16(void) {
     if (sscanf(project_version, "%d.%d.%d", &maj, &min, &sub) == 3)
         return sub + 10 * (min + 10 * maj);
     return 0;
-}
-
-int8_t eeprom_test_PUT(const unsigned int bytes) {
-    unsigned int i;
-    char line[16] = "abcdefghijklmno";
-    char line2[16];
-    uint8_t size = sizeof(line);
-    unsigned int count = bytes / 16;
-
-    for (i = 0; i < count; i++) {
-        st25dv64k_user_write_bytes(EEPROM_ADDRESS + i * size, &line, size);
-        if ((i % 16) == 0)
-            wdt_iwdg_refresh();
-    }
-
-    int8_t res_flag = 1;
-
-    for (i = 0; i < count; i++) {
-        st25dv64k_user_read_bytes(EEPROM_ADDRESS + i * size, &line2, size);
-        if (strcmp(line2, line))
-            res_flag = 0;
-        if ((i % 16) == 0)
-            wdt_iwdg_refresh();
-    }
-    return res_flag;
 }

@@ -157,7 +157,7 @@ MI_FACTORY_DEFAULTS::MI_FACTORY_DEFAULTS()
 
 void MI_FACTORY_DEFAULTS::click(IWindowMenu & /*window_menu*/) {
     if (MsgBoxWarning(_("This operation can't be undone, current configuration will be lost! Are you really sure to reset printer to factory defaults?"), Responses_YesNo, 1) == Response::Yes) {
-        eeprom_defaults();
+        config_store().factory_reset();
         MsgBoxInfo(_("Factory defaults loaded. The system will now restart."), Responses_Ok);
         sys_reset();
     }
@@ -405,10 +405,10 @@ void MI_SORT_FILES::OnChange(size_t old_index) {
 /*****************************************************************************/
 //MI_TIMEZONE
 MI_TIMEZONE::MI_TIMEZONE()
-    : WiSpinInt(eeprom_get_i8(EEVAR_TIMEZONE), SpinCnf::timezone_range, _(label), nullptr, is_enabled_t::yes, is_hidden_t::no) {}
+    : WiSpinInt(config_store().time_zone.get(), SpinCnf::timezone_range, _(label), nullptr, is_enabled_t::yes, is_hidden_t::no) {}
 void MI_TIMEZONE::OnClick() {
     int8_t timezone = GetVal();
-    eeprom_set_i8(EEVAR_TIMEZONE, timezone);
+    config_store().time_zone.set(timezone);
 }
 
 MI_FILAMENT_SENSOR_STATE::MI_FILAMENT_SENSOR_STATE()

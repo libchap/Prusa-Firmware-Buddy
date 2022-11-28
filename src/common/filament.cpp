@@ -64,7 +64,7 @@ void Filaments::SetToBeLoaded(filament_t filament) {
 
 // first call will initialize variable from flash, similar behavior to Meyers singleton
 filament_t &Filaments::get_ref() {
-    static filament_t filament_selected = filament_t::PLA;
+    static filament_t filament_selected = static_cast<filament_t>(config_store().filament_type.get());
     return filament_selected;
 }
 
@@ -105,7 +105,7 @@ void Filaments::Set(filament_t filament) {
         return;
     }
     get_ref() = filament;
-    //    ConfigurationStore<>::GetStore().filament_version.Set(filament);
+    config_store().filament_type.set(static_cast<uint8_t>(filament));
 }
 
 filament_t Filaments::GetLastPreheated() {
