@@ -13,6 +13,7 @@
 #include "freertos_mutex.hpp"
 #include <mutex>
 #include "hash_table.hpp"
+LOG_COMPONENT_REF(EEPROM_ACCESS);
 namespace configuration_store { // helper structs
 
 struct Key {
@@ -89,7 +90,7 @@ public:
     static constexpr uint8_t LAST_ITEM_STOP = 0xfe;
     static constexpr size_t HEADER_SIZE = 1;
     static constexpr size_t CRC_SIZE = 4;
-    static constexpr size_t NIL_POSITION = 6;
+    static constexpr size_t NIL_POSITION = 5;
 
     uint16_t first_free_space = START_OFFSET;
 
@@ -192,7 +193,8 @@ struct IndexComparator {
 template <class T>
 std::vector<uint8_t> EepromAccess::serialize_data(const char *key, T data) {
     std::size_t len = strlen(key);
-    uint32_t name_hash = crc32_calc(reinterpret_cast<const uint8_t *>(key), len);
+    uint32_t name_hash = crc32_sw(reinterpret_cast<const uint8_t *>(key), len, 0);
+    log_debug(EEPROM_ACCESS, "Saving item %s with id: %d", key, name_hash);
     DataItem<T> item = DataItem(name_hash, data);
     auto data_packed = (msgpack::pack(item));
     return data_packed;

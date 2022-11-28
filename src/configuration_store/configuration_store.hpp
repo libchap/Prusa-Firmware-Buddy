@@ -12,6 +12,7 @@
     #include "disable_interrupts.h"
 #endif
 
+LOG_COMPONENT_REF(ConfigurationStoreLog);
 namespace configuration_store {
 using Backend = std::variant<EepromAccess>;
 
@@ -54,9 +55,7 @@ template <class T, class CovertTo>
 void MemConfigItem<T, CovertTo>::set(T new_data) {
     std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
     if (!(data == new_data)) {
-#ifndef EEPROM_UNITTEST
         buddy::DisableInterrupts disable;
-#endif
         data = new_data;
         // using singleton to save on RAM usage, items does not need to have pointer
         ConfigurationStore::GetStore().template set(key, data);
@@ -64,12 +63,13 @@ void MemConfigItem<T, CovertTo>::set(T new_data) {
 }
 template <class T, class CovertTo>
 T MemConfigItem<T, CovertTo>::get() {
-    std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
+    buddy::DisableInterrupts disable;
     return data;
 }
 
 template <class T, class CovertTo>
 void MemConfigItem<T, CovertTo>::init(const T &new_data) {
+    log_debug(ConfigurationStoreLog, "Initialized item: %s", key);
     data = new_data;
 }
 
@@ -85,9 +85,7 @@ void MemConfigItem<std::array<char, SIZE>>::set(const char *new_data) {
     if (strcmp((char *)(data.data()), new_data) != 0) {
         std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
         {
-#ifndef EEPROM_UNITTEST
             buddy::DisableInterrupts disable;
-#endif
             strncpy(data.data(), new_data, SIZE);
         }
         // using singleton to save on RAM usage, items does not need to have pointer
@@ -99,9 +97,7 @@ void MemConfigItem<std::array<char, SIZE>>::set(const std::array<char, SIZE> &ne
     if (data != new_data) {
         std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
         {
-#ifndef EEPROM_UNITTEST
             buddy::DisableInterrupts disable;
-#endif
             data = new_data;
         }
         // using singleton to save on RAM usage, items does not need to have pointer
@@ -110,14 +106,13 @@ void MemConfigItem<std::array<char, SIZE>>::set(const std::array<char, SIZE> &ne
 }
 template <size_t SIZE>
 std::array<char, SIZE> MemConfigItem<std::array<char, SIZE>>::get() {
-#ifndef EEPROM_UNITTEST
     buddy::DisableInterrupts disable;
-#endif
     return data;
 }
 
 template <size_t SIZE>
 void MemConfigItem<std::array<char, SIZE>>::init(const std::array<char, SIZE> &new_data) {
+    log_debug(ConfigurationStoreLog, "Initialized item: %s", key);
     data = new_data;
 }
 template <size_t SIZE>

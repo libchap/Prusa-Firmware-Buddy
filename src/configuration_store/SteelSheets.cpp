@@ -69,7 +69,7 @@ std::array<char, SteelSheets::MAX_SHEET_NAME_LENGTH> SteelSheets::get_active_she
     return get_sheet_name(get_active_sheet_index());
 }
 std::array<char, SteelSheets::MAX_SHEET_NAME_LENGTH> SteelSheets::get_sheet_name(size_t index) {
-    auto sheet = get_sheet(get_active_sheet_index());
+    auto sheet = get_sheet(index);
     if (sheet.has_value()) {
         return sheet->name;
     }

@@ -18,6 +18,7 @@ function(generate_config_store_structure target source_file)
   add_custom_target(store-structure_${target} DEPENDS "${configuration_store_structure_file}")
 
   add_dependencies(${target} store-structure_${target})
+  add_dependencies(Marlin store-structure_${target})
 
   target_sources(${target} PRIVATE "${declarations_file}" "${item_updater_file}")
 

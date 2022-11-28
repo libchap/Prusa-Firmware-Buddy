@@ -1,6 +1,7 @@
 #include "eeprom_access.hpp"
 #include "hash_table.hpp"
 #include "timing.h"
+#include "HAL/HAL.h"
 LOG_COMPONENT_DEF(EEPROM_ACCESS, LOG_SEVERITY_DEBUG);
 using namespace configuration_store;
 bool EepromAccess::store_item(const std::vector<uint8_t> &data) {
@@ -48,7 +49,6 @@ std::optional<std::vector<uint8_t>> EepromAccess::load_item(uint16_t address) {
     }
 
     std::vector<uint8_t> data;
-    // add 4 to load also the crc
     data.resize(len);
 
     if ((address + sizeof(len) + len) > EEPROM_SIZE) {
@@ -166,20 +166,25 @@ bool EepromAccess::init_from(ItemUpdater &updater, uint16_t &address) {
     for (auto item = load_item(address); item.has_value(); item = load_item(address)) {
         auto data = item.value();
         Key key = msgpack::unpack<Key>(data);
-        if (!updater(key.key, data)) {
-            // unknown id
-            if (data[NIL_POSITION] == msgpack::nil) {
-                // already set to invalid in eeprom, we dont want to write another invalid item
-                invalid_items.Set(key.key, static_cast<uint16_t>(ItemState::Invalidated));
-            } else {
+        // TODO create some way to tell updater that this item was already invalidated.
+        if (data[NIL_POSITION] == msgpack::nil) {
+            // already set to invalid in eeprom, we dont want to write another invalid item
+            log_debug(EEPROM_ACCESS, "Found invalidated item with id: %d,", key.key);
+            invalid_items.Set(key.key, static_cast<uint16_t>(ItemState::Invalidated));
+        } else {
+            if (!updater(key.key, data)) {
+                // unknown id
+                log_debug(EEPROM_ACCESS, "Found unknown item with id: %d,", key.key);
                 invalid_items.Set(key.key, static_cast<uint16_t>(ItemState::Invalid));
             }
         }
+
         address += HEADER_SIZE + CRC_SIZE + data.size();
         num_of_items++;
     }
     log_info(EEPROM_ACCESS, "Loaded %d items", num_of_items);
     uint8_t ending_flag = st25dv64k_user_read(address);
+    log_info(EEPROM_ACCESS, "loaded ending flag %u", ending_flag);
     first_free_space = address;
     invalidate_items(invalid_items);
     return ending_flag == LAST_ITEM_STOP;
@@ -193,8 +198,13 @@ bool EepromAccess::check_size(uint8_t size) {
 
 void EepromAccess::reset() {
     std::unique_lock lock(mutex);
-    st25dv64k_user_write(START_OFFSET, 0xff);
-    st25dv64k_user_write(START_OFFSET + BANK_SIZE, 0xff);
+    uint16_t a;
+    uint32_t data = 0xffffffff;
+    for (a = 0x0000; a < 0x0800; a += 4) {
+        st25dv64k_user_write_bytes(a, &data, 4);
+        if ((a % 0x200) == 0)   // clear entire eeprom take ~4s
+            watchdog_refresh(); // we will reset watchdog every ~1s for sure
+    }
     bank_selector = 0;
     st25dv64k_user_write(BANK_SELECTOR_ADDRESS, bank_selector);
     first_free_space = START_OFFSET;

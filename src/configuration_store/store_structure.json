@@ -22,30 +22,6 @@
     "data_type": "bool",
     "default": true
   },
-  "sheet_profile0": {
-    "data_type": "float",
-    "default": 0
-  },
-  "sheet_profile1": {
-    "data_type": "float",
-    "default": 0,
-    "ifdef": "HAS_SHEETS"
-  },
-  "sheet_profile2": {
-    "data_type": "float",
-    "default": 0,
-    "ifdef": "HAS_SHEETS"
-  },
-  "sheet_profile3": {
-    "data_type": "float",
-    "default": 0,
-    "ifdef": "HAS_SHEETS"
-  },
-  "sheet_profile4": {
-    "data_type": "float",
-    "default": 0,
-    "ifdef": "HAS_SHEETS"
-  },
   "pid_noz_p": {
     "data_type": "float",
     "default": "\n#ifdef DEFAULT_Kp\n    DEFAULT_Kp, // EEVAR_PID_NOZ_P\n#else\n    0,\n#endif\n"
@@ -347,5 +323,13 @@
   "steel_sheets": {
     "data_type": "SteelSheets",
     "default": "SteelSheets()"
+  },
+  "time_zone": {
+    "data_type": "int8_t",
+    "default": 0
+  },
+  "filament_type": {
+    "data_type": "uint8_t",
+    "default": 0
   }
 }

@@ -1,5 +1,6 @@
 #include "configuration_store.hpp"
 #include "configuration_store.h"
+LOG_COMPONENT_DEF(ConfigurationStoreLog, LOG_SEVERITY_DEBUG);
 using namespace configuration_store;
 
 ConfigurationStore &config_store() {
@@ -27,14 +28,6 @@ ConfigurationStore &ConfigurationStore::GetStore() {
 void ConfigurationStore::factory_reset() {
     // just invalidate the eeprom and reset the printer
     std::unique_lock lock(get_item_mutex());
-    EepromAccess::instance().reset();
+    std::visit([&](auto &access) { access.reset(); },
+        backend);
 }
-
-//void ConfigurationStore::dump_data(Backend data_dump, bool save_default) {
-//    backend.swap(data_dump);
-//    std::apply([&](auto &... items) {
-//        ((items.dump_data(save_default)), ...);
-//    },
-//        tuplify());
-//    backend.swap(data_dump);
-//}

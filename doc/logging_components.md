@@ -3,6 +3,7 @@ This file is generated automatically so don't edit it directly
 
 - Bootloader: LOG_SEVERITY_INFO, src/bootloader/bootloader.cpp
 - Buddy: LOG_SEVERITY_DEBUG, src/common/appmain.cpp
+- ConfigurationStoreLog: LOG_SEVERITY_DEBUG, src/configuration_store/configuration_store.cpp
 - Core: LOG_SEVERITY_INFO, src/common/appmain.cpp
 - CrashDump: LOG_SEVERITY_INFO, src/common/crash_dump/crash_dump_distribute.cpp
 - EEPROM: LOG_SEVERITY_INFO, src/common/eeprom.cpp
