@@ -18,7 +18,7 @@ TEST_CASE("Test item storing and loading") {
     std::vector<uint8_t> data { 0x11, 0x22, 0x33, 0x44 };
     eeprom_chip.clear();
     EepromAccess eeprom;
-    ConfigurationStore<> store(EepromAccess {});
+    ConfigurationStore store(EepromAccess {});
     auto updater = ItemUpdater(store);
     eeprom.init(updater);
     eeprom.store_item(data);
@@ -60,7 +60,7 @@ TEST_CASE("Multiple saves and loads") {
     std::vector<std::vector<uint8_t>> data = { { 0x11, 0x22, 0x33, 0x44 }, { 0x11, 0x44 }, { 0x11, 0x33, 0x44 }, { 0x11 }, { 0x11, 0x11, 0x22, 0x33, 0x44 } };
     eeprom_chip.clear();
     EepromAccess eeprom;
-    ConfigurationStore<> store(EepromAccess {});
+    ConfigurationStore store(EepromAccess {});
     auto updater = ItemUpdater(store);
     eeprom.init(updater);
     size_t read_address = eeprom.get_start_offset();
@@ -209,4 +209,10 @@ TEST_CASE("Struct") {
     REQUIRE(struct_type.SimpleType == 10);
     REQUIRE(struct_type.array == std::array<int32_t, 4> { 10, 10, 0, 0 });
     REQUIRE(strcmp(struct_type.string_type.data(), "test") == 0);
+}
+
+TEST_CASE("Nil postion") {
+    InvalidatedItem item { 0xff };
+    auto data = msgpack::pack(item);
+    REQUIRE(data[EepromAccess::NIL_POSITION] == msgpack::nil);
 }
