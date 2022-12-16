@@ -19,6 +19,7 @@ enum class Response : uint8_t {
     Change,
     Continue,
     Cooldown,
+    Disable_crash_detection,
     Filament_removed,
     FLEX,
     FS_disable,

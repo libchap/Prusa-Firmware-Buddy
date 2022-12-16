@@ -57,7 +57,7 @@ const PhaseResponses ClientResponses::CrashRecoveryResponses[CountPhases<PhasesC
     { Response::Retry, Response::Pause, Response::Resume }, //axis NOK
     {},                                                     //axis short
     {},                                                     //axis long
-    { Response::Resume, Response::Pause },                  //repeated crash
+    { Response::Resume, Response::Pause, Response::Disable_crash_detection }, //repeated crash
 };
 
 const PhaseResponses ClientResponses::SelftestResponses[CountPhases<PhasesSelftest>()] = {

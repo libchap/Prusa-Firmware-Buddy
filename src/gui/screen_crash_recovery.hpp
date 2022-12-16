@@ -54,7 +54,7 @@ struct WinsRepeatedCrash {
     window_icon_t icon_nozzle_crash;
     window_icon_t icon_nozzle;
     RadioButton radio;
-    static constexpr PhaseTexts texts = { { "Resume", "Pause" } };
+    static constexpr PhaseTexts texts = { { "Resume", "Pause", "DC" } };
     WinsRepeatedCrash(ScreenCrashRecovery &screen);
 };
 

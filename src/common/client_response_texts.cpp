@@ -21,6 +21,7 @@ const std::array<BtnResource, static_cast<size_t>(Response::_last) + 1> BtnRespo
     std::make_pair( N_("CHANGE"),           nullptr ),                  // Change
     std::make_pair( N_("CONTINUE"),         &png::resume_48x48 ),       // Continue
     std::make_pair( N_("COOLDOWN"),         nullptr ),                  // Cooldown
+    std::make_pair( N_("DISABLE CRASHDET"), nullptr ),                  // Disable crash detection
     std::make_pair( N_("DISABLE SENSOR"),   nullptr ),                  // Filament_removed
     std::make_pair( "FLEX",                 &png::spool_58x58 ),        // FLEX filament, do not translate
     std::make_pair( N_("DISABLE FS"),       nullptr ),                  // FS_disable

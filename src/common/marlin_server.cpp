@@ -30,6 +30,9 @@
 #include "../Marlin/src/feature/babystep.h"
 #include "../Marlin/src/feature/bedlevel/bedlevel.h"
 #include "../Marlin/src/feature/pause.h"
+#if ENABLED(CRASH_RECOVERY)
+    #include "../Marlin/src/feature/prusa/crash_recovery.h"
+#endif
 #include "../Marlin/src/feature/prusa/measure_axis.h"
 #include "../Marlin/src/feature/prusa/homing.h"
 #include "../Marlin/src/libs/nozzle.h"
@@ -1273,6 +1276,9 @@ static void _server_print_loop(void) {
     case mpsCrashRecovery_Repeated_Crash: {
         marlin_server_nozzle_timeout_loop();
         switch (ClientResponseHandler::GetResponseFromPhase(PhasesCrashRecovery::repeated_crash)) {
+        case Response::Disable_crash_detection:
+            crash_s.disable();
+            // FALLTHROUGH
         case Response::Resume:
             marlin_server.print_state = mpsResuming_Begin;
             FSM_DESTROY__LOGGING(CrashRecovery);
